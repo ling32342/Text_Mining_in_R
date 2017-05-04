@@ -1,0 +1,376 @@
+---
+  title: "Text Mining in R"
+  subtitle: '巨量資料與統計分析'
+  author: "Hsiao Ling, Hsu"
+  date: "Nov. 30, 2016"
+  output: 
+    ioslides_presentation: 
+      fig_height: 6
+      fig_width: 10
+      widescreen: yes
+      autosize: true  
+      transition: default
+      transition-speed: slow
+---
+
+```{r,echo=F}
+options('width'=100)
+knitr::opts_chunk$set(comment="",prompt=T,strip.white=F,warning=FALSE)
+library(DT)
+```
+
+## R 語言簡介
+  - R語言自1993年問世，用於統計分析、繪圖、資料採礦、矩陣運算與機器學習等多個面向
+  - 兩大特色：免費下載、開放原始碼。
+  - 套件：ggmap, ggplot
+  - R Studio/R Pubs/GitHub
+  - [軟體安裝教學(R & SQL)](https://ling32342.github.io/2016_Workshop/2016_Install_tutorial.html)
+
+# 字串處理
+
+## 常用字串處理function
+
+- nchar
+- grep
+- grepl
+- regexpr
+- sub
+- gsub
+- substr
+- paste
+- strsplit
+
+## example
+
+```{r}
+address <- c("臺北市文山區指南路二段91~120號"       
+        ,"臺北市大同區重慶北路一段61~90號"      
+        ,"臺北市文山區指南路三段1~30號"         
+        ,"臺北市文山區指南路二段45巷31~60號"    
+        ,"臺北市內湖區民權東路六段90巷6弄1~30號"
+        ,"臺北市文山區興隆路四段1~30號")
+```
+
+```{r}
+class(address)
+```
+
+
+## nchar
+
+計算字串長度
+```{r}
+address
+```
+
+```{r}
+nchar(address)
+```
+
+## grep
+
+grep第一個參數是pattern, 第二個是data,
+
+output為有符合這個pattern是第幾筆資料
+
+```{r}
+grep(pattern = "文山區", x = address)
+```
+
+```{r}
+grep("指南路", address)
+```
+
+## grep (2)
+
+```{r}
+address
+```
+
+```{r}
+(a <- grep("指南路二段", address))
+```
+
+```{r}
+address[a]
+```
+
+
+## grepl
+
+與grep用法相似,差異在於其output是TRUE/FALSE
+
+```{r}
+grepl(pattern = "文山區", x = address)
+```
+
+```{r}
+grepl("指南路", address)
+```
+
+
+## grepl (2)
+
+```{r}
+address
+```
+
+```{r}
+(a <- grepl("指南路二段", address))
+```
+
+```{r}
+address[a]
+```
+
+## regexpr
+
+找出**第一個**符合pattern的字串在哪個位置及長度,
+
+如果不符合pattern,會顯示-1
+
+```{r}
+address
+```
+
+```{r}
+regexpr(pattern = "指", text = address)
+```
+
+## regexpr (2)
+```{r}
+regexpr(pattern = "指南路", text = address)
+regexpr("指南路二段", address)
+```
+
+## regexpr (3)
+```{r}
+regexpr("號", address)
+regexpr("[0-9]", address)
+```
+
+## gregexpr
+
+找出**所有**符合pattern的字串在哪個位置及長度
+
+```{r}
+address
+```
+
+先回憶一下剛剛regexpr的結果
+```{r}
+regexpr("[0-9]", address)
+```
+
+---
+
+```{r}
+gregexpr("[0-9]", address)
+```
+
+
+## sub
+
+sub指substitute,
+
+把每個字串中**第一個**符合pattern的內容取代
+
+```{r}
+sub(pattern = "指南路", replacement = "AAA", x = address)
+sub("[0-9]", "X", address)
+```
+
+## gsub
+
+把每個字串中**所有**符合pattern的內容取代
+
+```{r}
+gsub(pattern = "指南路", replacement = "AAA", x = address)
+gsub("[0-9]","X",address)
+```
+
+
+## substr
+```{r}
+address
+```
+
+- 如果我只想要地址中的[行政區＋路段]
+```{r}
+substr(address, start = 4, stop = 12)
+```
+
+## substr (2)
+
+結合regexpr
+
+```{r}
+(a1 = regexpr("[0-9]",address))
+(a2 = regexpr("號",address))
+```
+
+## substr (3)
+```{r}
+substr(x = address, start = a1, stop = a2)
+substr(address, 4, a1)
+substr(address, 4, a1-1)
+```
+
+## paste
+
+字串的剪貼
+
+```{r}
+paste("臺北市", substr(address, 4, a1-1), substr(x = address, start = a1, stop = a2))
+paste("臺北市", substr(address, 4, a1-1), 
+      substr(x = address, start = a1, stop = a2),sep = "")
+# paste(..., sep="") 相當於 paste0(...)
+```
+
+## strsplit
+
+字串的切割
+
+```{r}
+strsplit(address,"市")
+```
+
+## Reference
+
+- [正規表示式 Regular Expression](https://atedev.wordpress.com/2007/11/23/%E6%AD%A3%E8%A6%8F%E8%A1%A8%E7%A4%BA%E5%BC%8F-regular-expression/)
+- [Stringr套件](http://blog.fens.me/r-stringr/)
+
+# 文字處理
+
+## 讀取資料
+
+- readLines()
+- 試讀[蔡英文總統就職演說中文全文](http://www.cna.com.tw/news/firstnews/201605205012-1.aspx)
+
+```{r,warning=FALSE}
+readLines("Tsai.txt")
+```
+
+
+
+## 資料處理
+
+- 安裝套件
+```{r,eval=FALSE}
+install.packages("tm")
+``` 
+    
+- 載入套件
+```{r,warning=FALSE,message=FALSE}
+library("tm")
+```    
+
+- 刪除標點符號與數字
+```{r,eval=FALSE}
+removePunctuation()
+removeNumbers()
+```
+
+---
+```{r}
+# 讀入資料
+(G <- readLines("Tsai.txt"))
+```
+
+---
+```{r}
+# 刪除標點符號
+(G1 <- removePunctuation(G))
+```
+
+---
+```{r}
+# 刪除數字
+(G1 <- removeNumbers(G1))
+```
+
+---
+```{r}
+# 計算列數
+(row = length(G1))
+# 將所有段落連結在一起
+(Gf <-  paste(G1[1:row],collapse = ""))
+# 將所有的空白格移除掉
+(Gfinal <- gsub(" ","",Gf))
+```
+
+---
+```{r}
+# 先宣告一個空向量
+word = NULL
+```
+
+```{r}
+# 計算就職演說總字數
+(n = nchar(Gfinal))
+```
+
+```{r}
+# 每兩個字兩個字做字串剪貼（12,23,34,45,...）
+for(i in 1:n-1){
+  word <- c(word, substr(Gfinal,i,i+1))
+}
+word
+```
+
+---
+```{r}
+wordtable_i <- table(word)
+wordtable_i[1:10]
+wordtable <- sort(wordtable_i,decreasing = TRUE)
+wordtable[1:10]
+```
+
+
+## 文字雲
+
+- 安裝套件
+```{r,eval=FALSE}
+install.packages("wordcloud")
+``` 
+    
+- 載入套件
+```{r,warning=FALSE,message=FALSE}
+library(wordcloud)
+```  
+
+- 建立data.frame
+```{r}
+(d <- data.frame(word = names(wordtable), freq = as.numeric(wordtable)))
+```
+
+
+## Word Cloud
+
+- `?wordcloud`
+
+```{r,eval=FALSE}
+wordcloud(words,freq,scale=c(4,.5),min.freq=3,max.words=Inf,
+	random.order=TRUE, random.color=FALSE, rot.per=.1,
+	colors="black",ordered.colors=FALSE,use.r.layout=FALSE,
+	fixed.asp=TRUE, ...)
+```
+    
+  - words : 文字
+  - freq : 出現次數
+  - min.freq : 最小出現次數，若低於此值，則不會畫在圖上
+  - max.words : 最多畫幾組文字
+  - random.order : 是不是要隨機順序來畫圖
+  - colors : [顏色選取ColorBrewer](http://colorbrewer2.org/#type=sequential&scheme=BuGn&n=3)
+  - ...  其餘參數設定請參考 `?wordcloud` or `help(wordcloud)`
+
+
+---
+```{r, fig.height=5, fig.width=6,fig.align='center'}
+par(family = 'STHeiti') # MAC使用者需此行程式碼才能顯示中文字
+wordcloud(d$word, d$freq, scale=c(8,.2),min.freq=3,
+          max.words=Inf, random.order=FALSE,
+          colors=c("#7F7F7F", "#5F9EA0", "#FF8C69"))
+```
+
+# Thank you.
